@@ -6,6 +6,11 @@
 .env
 .env.local
 
+# 私有开发文档(设计/计划/任务), 只留在本地, 不随仓库发布
+.design/
+.plan/
+.task/
+
 # Python
 __pycache__/
 *.py[cod]

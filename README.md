@@ -11,6 +11,8 @@ Baidu Netdisk ships an official Linux desktop client but nothing headless or web
 This image wraps that client in a virtual display (Xvfb + x11vnc + noVNC), so you get the
 full desktop in any browser tab — no VNC viewer, no Wine, no dependency wrangling.
 
+Extended usage guide and FAQ: [docs/usage.md](docs/usage.md) (中文).
+
 ## Features
 
 - **Official client** — the vendor's own amd64 build, not a repack

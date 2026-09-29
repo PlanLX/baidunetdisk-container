@@ -16,6 +16,11 @@ LICENSE
 .env
 .env.local
 
+# 私有开发文档
+.design/
+.plan/
+.task/
+
 # Python 缓存
 __pycache__/
 *.py[cod]
