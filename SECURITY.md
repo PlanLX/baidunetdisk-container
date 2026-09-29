@@ -1,44 +1,46 @@
-# 安全说明
+# Security
 
-## 报告漏洞
+## Reporting a vulnerability
 
-请不要开公开 issue。用 GitHub 的
-[私密漏洞报告](https://github.com/planlx/baidunetdisk-container/security/advisories/new)
-提交, 或者直接邮件联系仓库维护者。一般几天内会回。
+Please don't open a public issue. Use GitHub's
+[private vulnerability reporting](https://github.com/planlx/baidunetdisk-container/security/advisories/new),
+or email the maintainer directly.
 
-报告时请带上: 复现步骤、受影响版本(镜像标签)、以及你预期会发生什么。
+Include reproduction steps, the affected image tag, and what you expected to happen.
 
-## 这个镜像的暴露面
+## Attack surface
 
-说清楚比较好, 因为容器里跑的是一个**完整的桌面**:
+The container runs a **complete desktop**, so treat access to it as access to the account:
 
-| 入口 | 默认状态 | 说明 |
-|---|---|---|
-| noVNC `6080` | 对外映射 | 网页入口, 密码保护 |
-| 原生 VNC `5900` | **不映射** | compose 里注释掉了, 要用得自己打开, 密码保护 |
+| Entry point | Default | Notes |
+| --- | --- | --- |
+| noVNC `6080` | published | Web UI, password-protected |
+| Native VNC `5900` | **not published** | Commented out in `docker-compose.yml`; password-protected when enabled |
 
-拿到 VNC 密码就等于拿到容器里的桌面: 能操作网盘、能看到已登录的账号、能读写挂载进去的目录。
+Anyone with the VNC password can operate the desktop: use the signed-in Baidu Netdisk
+account, and read or write anything in the mounted download directory.
 
-## 部署建议
+## Deployment hardening
 
-- **不要直接暴露在公网。** 想远程用就套一层带认证的反向代理(HTTPS + Basic Auth,
-  或者 Cloudflare Tunnel / Tailscale 这类), 别把 6080 直接开出去。
-- 只在 `127.0.0.1` 上监听: 端口映射写成 `127.0.0.1:6080:6080`, 这样只有本机能连。
-- 设一个自己的密码, 别用默认值:
+- **Don't expose port 6080 to the public internet.** For remote access, put it behind an
+  authenticating reverse proxy (HTTPS + auth, Cloudflare Tunnel, Tailscale, …).
+- Bind to localhost only by setting `WEB_PORT=127.0.0.1:6080` in `.env`.
+- Set your own password instead of relying on the generated one:
   ```bash
   # .env
-  VNC_PASSWORD=一串够长的随机字符
+  VNC_PASSWORD=<a long random string>
   ```
-- 挂载进去的下载目录, 容器里的桌面能读写。别把敏感目录(比如 `~/.ssh`)挂进去。
-- 镜像跟着上游更新: `docker compose pull && docker compose up -d`。
+- Only mount directories you're comfortable exposing to the desktop. Don't mount anything
+  sensitive such as `~/.ssh`.
+- Keep the image current: `docker compose pull && docker compose up -d`.
 
-## 已知的、不算漏洞的事
+## Design notes
 
-- **容器内客户端以非 root 用户 `baidu` 运行**, 但**没有**做更强的沙箱隔离。
-  `--no-sandbox` 是 Chromium 内核在容器里的常规做法(客户端本来也需要)。
-- **镜像里没有输入法**、没有 SSH、没有其它服务, 只有 Xvfb + fluxbox + x11vnc + noVNC + 客户端。
-
-## 关于百度网盘账号
-
-登录态保存在 `./.data/config`, 里面是真实的登录凭据。这个目录已经被 `.gitignore`
-和 `.dockerignore` 排除, 但你自己备份/分享项目目录时要注意别把它带上。
+- The client runs as the non-root user `baidu` (uid 1000). There is no stronger sandbox
+  beyond the container itself; `--no-sandbox` is standard practice for Chromium-based
+  clients in containers and is required here.
+- The image runs only Xvfb, fluxbox, x11vnc, noVNC and the client. No SSH, no shell
+  daemon, no other services are listening.
+- The login session under `./.data/config` holds real credentials. It is excluded from
+  both git and the Docker build context, but be careful when backing up or sharing the
+  project directory.
