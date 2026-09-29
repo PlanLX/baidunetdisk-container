@@ -1,0 +1,21 @@
+# 运行时数据: 登录态 + 下载的文件。
+# 可能几十 GB, 而且下载目录里是用户自己的东西, 绝不能进仓库。
+.data/
+
+# 本地环境配置, 可能写了 VNC_PASSWORD
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+
+# 日志
+*.log
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

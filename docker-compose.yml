@@ -1,0 +1,53 @@
+# 容器-百度盘 —— 百度网盘官方 Linux 客户端 + noVNC
+#
+# 快速开始:
+#   mkdir -p .data/config .data/downloads     # 先建好, 免得 Docker 用 root 建出来
+#   docker compose up -d
+#   浏览器打开 http://localhost:6080
+#
+# 只想用 Docker Hub 上的现成镜像(不本地构建):
+#   docker compose pull && docker compose up -d
+#
+# 改了 Dockerfile / entrypoint 之后重新构建:
+#   docker compose up -d --build
+#
+# 常用: docker compose logs -f / docker compose down
+#
+# 想改端口、分辨率、密码: 复制 .env.example 成 .env 再改。
+
+services:
+  baidupan:
+    # 同时写 image 和 build:
+    #   docker compose pull        → 用 Docker Hub 上的现成镜像
+    #   docker compose up --build  → 从当前目录构建, 构建结果就用这个标签
+    image: ${IMAGE:-planlx/baidunetdisk-container:latest}
+    build:
+      context: .
+    # 固定容器名, 文档里的 docker exec baidupan ... 才好使。
+    # 代价是这个 compose 项目不能起多份实例(本项目也不需要)。
+    container_name: baidupan
+    ports:
+      # noVNC 网页入口。只想本机访问就把 .env 里的 WEB_PORT 改成 127.0.0.1:6080
+      - "${WEB_PORT:-6080}:6080"
+      # 原生 VNC 客户端入口。默认不开 —— 少暴露一个端口, 要用再取消注释。
+      # macOS 上映射到 5901: 系统的"屏幕共享"占着 5900, 直接映射会冲突。
+      # - "${VNC_PORT:-5901}:5900"
+    environment:
+      # 留空 = 启动时随机生成, 打印在日志里, 并存到 ./.data/config/.vnc-password
+      VNC_PASSWORD: "${VNC_PASSWORD:-}"
+      SCREEN: "${SCREEN:-1024x768x24}"
+      TZ: "${TZ:-Asia/Shanghai}"
+    volumes:
+      # 登录态: 不挂载的话每次重建容器都要重新扫码登录
+      - ./.data/config:/home/baidu/.config/baidunetdisk
+      # 下载目录: 必须挂载, 否则文件只落在容器 overlay 里, 重建就丢
+      - ./.data/downloads:/home/baidu/baidunetdiskdownload
+    restart: unless-stopped
+    stop_grace_period: 10s
+    # 客户端是 Chromium 内核, /dev/shm 太小渲染进程会崩(Docker 默认只有 64MB)
+    shm_size: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

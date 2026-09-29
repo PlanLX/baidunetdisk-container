@@ -1,0 +1,31 @@
+#!/bin/sh
+# 把百度网盘主窗口恢复出来。
+#
+# 背景: 点了客户端右上角的关闭(会缩到托盘)或者最小化之后, 主窗口不可见。
+# 现在容器用 fluxbox(底部任务栏可见), 一般直接从任务栏点回来即可;
+# 任务栏也找不到时, 跑这个命令把窗口重新映射出来。
+#
+# 用法(在宿主机上):
+#   docker exec baidupan bdrestore
+set -eu
+
+export DISPLAY="${DISPLAY:-:1}"
+
+found=0
+for w in $(xdotool search --name '百度网盘' 2>/dev/null; xdotool search --class baidunetdisk 2>/dev/null); do
+    # 只要尺寸像主窗口的, 跳过那些 5x5 / 10x10 的内部小窗
+    geo="$(xdotool getwindowgeometry --shell "${w}" 2>/dev/null || true)"
+    width="$(echo "${geo}" | sed -n 's/^WIDTH=//p')"
+    if [ -n "${width}" ] && [ "${width}" -gt 400 ] 2>/dev/null; then
+        xdotool windowmap "${w}" 2>/dev/null || true
+        xdotool windowactivate --sync "${w}" 2>/dev/null || true
+        xdotool windowraise "${w}" 2>/dev/null || true
+        found=1
+    fi
+done
+
+if [ "${found}" = "0" ]; then
+    echo "没找到百度网盘窗口, 可能在重启中" >&2
+    exit 1
+fi
+echo "已把百度网盘窗口拉回前台"

@@ -1,0 +1,25 @@
+# 构建上下文瘦身。重点是把 .data/ 挡掉 ——
+# 那里面是用户下载的文件, 几十 GB 传进 daemon 会让构建慢到没法用。
+.data/
+
+# 版本控制与 CI, 镜像里用不到
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# 文档与许可证, 镜像里用不到
+*.md
+LICENSE
+
+# 本地环境配置, 可能含密码, 绝不能烤进镜像
+.env
+.env.local
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+
+# 编辑器
+.vscode/
+.idea/

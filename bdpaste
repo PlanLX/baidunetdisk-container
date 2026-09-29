@@ -1,0 +1,29 @@
+#!/bin/sh
+# 把标准输入的文字送进容器里的 X 剪贴板, 并自动给当前窗口发一次 Ctrl+V。
+#
+# 用法(在宿主机上):
+#   printf '%s' 'https://pan.baidu.com/s/xxxx' | docker exec -i baidupan bdpaste
+#
+# 用之前先在客户端里点一下目标输入框(搜索框/输入框), 让焦点落在它上面。
+set -eu
+
+export DISPLAY="${DISPLAY:-:1}"
+
+text="$(cat)"
+if [ -z "${text}" ]; then
+    echo "用法: printf '%s' '要粘贴的文字' | bdpaste" >&2
+    exit 1
+fi
+
+# 放进 CLIPBOARD 选择区(就是 Ctrl+V 用的那个)
+printf '%s' "${text}" | xclip -selection clipboard -i
+
+# 尽量把网盘主窗口拉到前台, 免得 Ctrl+V 落到别处
+win="$(xdotool search --name '百度网盘' 2>/dev/null | tail -n 1 || true)"
+if [ -n "${win}" ]; then
+    xdotool windowmap "${win}" 2>/dev/null || true
+    xdotool windowactivate --sync "${win}" 2>/dev/null || true
+fi
+
+sleep 0.3
+xdotool key --clearmodifiers ctrl+v

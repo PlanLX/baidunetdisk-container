@@ -1,0 +1,8 @@
+# 这些脚本要在 Linux 容器里执行, 一旦被 Windows 的 autocrlf 换成 CRLF,
+# 容器里会直接报 "bad interpreter: No such file or directory"。
+# 统一按 LF 检出, 不受每个人本机 git config 影响。
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
