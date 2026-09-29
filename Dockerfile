@@ -81,8 +81,10 @@ RUN set -eux; \
     rm -f /tmp/baidunetdisk.deb; \
     rm -rf /var/lib/apt/lists/*; \
     rm -f /opt/baidunetdisk/chrome-sandbox; \
-    ldd /opt/baidunetdisk/libkernel.so | grep -q 'not found' \
-        && { echo 'ERROR: 下载内核 libkernel.so 仍有缺失依赖' >&2; exit 1; } || true; \
+    if ldd /opt/baidunetdisk/libkernel.so | grep -q 'not found'; then \
+        echo 'ERROR: 下载内核 libkernel.so 仍有缺失依赖' >&2; \
+        exit 1; \
+    fi; \
     find /opt/baidunetdisk/locales -type f -name '*.pak' ! -name 'zh-CN.pak' ! -name 'en-US.pak' -delete; \
     dpkg-query -W -f='${Version}\n' baidunetdisk > /etc/baidunetdisk.version
 
